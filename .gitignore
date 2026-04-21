@@ -27,7 +27,7 @@ env.bak/
 venv.bak/
 
 # Streamlit
-.streamlit/
+.streamlit/*
 ! .streamlit/config.toml
 streamlit.log
 

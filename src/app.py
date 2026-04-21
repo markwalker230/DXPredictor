@@ -9,12 +9,16 @@ matplotlib.use('Agg') # Non-interactive backend
 import matplotlib.pyplot as plt
 from utils import (gs_to_latlon, get_solar_indices, get_propagation_score, 
                    get_weather_and_elevation, get_nearby_activations, 
-                   get_ionospheric_indices, get_dx_targets, calculate_bearing, calculate_distance)
+                   get_ionospheric_indices, get_dx_targets, calculate_bearing, calculate_distance,
+                   generate_random_gridsquare)
 import datetime
 import numpy as np
 
 # Page Configuration
 st.set_page_config(page_title="SOTA/POTA DX Predictor by ZS6MDX", layout="wide", initial_sidebar_state="expanded")
+
+if 'default_gs' not in st.session_state:
+    st.session_state.default_gs = generate_random_gridsquare().upper()
 
 # Custom Styling
 st.markdown("""
@@ -33,7 +37,7 @@ st.markdown("---")
 
 # Sidebar - Settings
 st.sidebar.header("Station Configuration")
-gridsquare = st.sidebar.text_input("Home Maidenhead Gridsquare", value="KG33ww").upper()
+gridsquare = st.sidebar.text_input("Home Maidenhead Gridsquare", value=st.session_state.default_gs).upper()
 
 power_options = {"QRP (<20W)": 15, "Standard (100W)": 100, "QRO (1500W)": 1500}
 power_label = st.sidebar.selectbox("Transmit Power Level", list(power_options.keys()))

@@ -4,6 +4,21 @@ import datetime
 import pandas as pd
 import numpy as np
 import math
+import random
+import string
+
+def generate_random_gridsquare():
+    """Generate a random 6-character Maidenhead gridsquare."""
+    # Field: A-R (18 fields)
+    f1 = random.choice(string.ascii_uppercase[:18])
+    f2 = random.choice(string.ascii_uppercase[:18])
+    # Square: 0-9
+    s1 = random.choice(string.digits)
+    s2 = random.choice(string.digits)
+    # Subsquare: a-x (24 subsquares)
+    ss1 = random.choice(string.ascii_lowercase[:24])
+    ss2 = random.choice(string.ascii_lowercase[:24])
+    return f"{f1}{f2}{s1}{s2}{ss1}{ss2}"
 
 def gs_to_latlon(gs):
     """Convert Maidenhead gridsquare to latitude and longitude."""

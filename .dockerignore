@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+dx_env/
+miniconda3/
+.streamlit/
+.git/
+.github/
+.vscode/
+*.log

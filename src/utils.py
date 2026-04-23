@@ -228,6 +228,76 @@ def get_nearby_activations(lat, lon, gridsquare):
         
     return results
 
+def get_realtime_spots(gs_source, minutes=60):
+    """Fetch recent WSPR spots from WSPR.live ClickHouse DB."""
+    import urllib.request
+    import urllib.parse
+    import json
+
+    # Maidenhead to approx lat/lon
+    lat_src, lon_src = gs_to_latlon(gs_source)
+    if not lat_src: return []
+
+    bands = {10: 28, 20: 14, 40: 7}
+    all_spots = []
+    base_url = "https://db1.wspr.live/"
+    
+    gs4 = gs_source[:4].upper()
+    gs2 = gs_source[:2].upper()
+
+    for band_m, band_val in bands.items():
+        # 1. Try local/regional spots first
+        query = f"""
+            SELECT rx_lat, rx_lon, tx_lat, tx_lon, snr, band, rx_loc, tx_loc
+            FROM rx 
+            WHERE band = {band_val} 
+            AND time > subtractMinutes(now(), {minutes})
+            AND (rx_loc LIKE '{gs4}%' OR tx_loc LIKE '{gs4}%' OR rx_loc LIKE '{gs2}%' OR tx_loc LIKE '{gs2}%')
+            LIMIT 500
+        """
+        
+        spots = []
+        try:
+            params = urllib.parse.urlencode({'query': query + " FORMAT JSON"})
+            url = f"{base_url}?{params}"
+            with urllib.request.urlopen(url, timeout=15) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                spots = data.get('data', [])
+        except Exception:
+            pass
+
+        # 2. Fallback: If no local spots, get recent global spots for this band
+        if not spots:
+            query_global = f"""
+                SELECT rx_lat, rx_lon, tx_lat, tx_lon, snr, band
+                FROM rx 
+                WHERE band = {band_val} 
+                AND time > subtractMinutes(now(), 15)
+                LIMIT 200
+            """
+            try:
+                params = urllib.parse.urlencode({'query': query_global + " FORMAT JSON"})
+                url = f"{base_url}?{params}"
+                with urllib.request.urlopen(url, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    spots = data.get('data', [])
+            except Exception:
+                pass
+
+        for s in spots:
+            is_rx = gs2 in str(s.get('rx_loc', ''))
+            target_lat = s.get('tx_lat', s.get('rx_lat'))
+            target_lon = s.get('tx_lon', s.get('rx_lon'))
+            
+            all_spots.append({
+                'lat': target_lat,
+                'lon': target_lon,
+                'snr': s['snr'],
+                'band': f"{band_m}m"
+            })
+            
+    return all_spots
+
 def calculate_bearing(lat1, lon1, lat2, lon2):
     """Calculate the initial bearing from point A to point B."""
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])

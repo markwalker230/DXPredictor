@@ -183,7 +183,52 @@ else:
                     st.markdown(f'<div class="activation-card" style="border-left-color: #22c55e;"><a href="https://pota.app/#/park/{pota.get("reference")}" target="_blank" style="text-decoration:none; color:#1e293b;"><strong>{pota.get("reference")}</strong>: {pota.get("name")}</a></div>', unsafe_allow_html=True)
 
     with tab_paths:
-        st.subheader("🌍 World DX Path Map")
+        st.subheader("🌍 Real-Time Global DX Heatmap (WSPR)")
+        st.info("Showing actual signal paths from the last 60 minutes for stations near your gridsquare.")
+        
+        with st.spinner("Analyzing live WSPR spots..."):
+            from utils import get_realtime_spots
+            spots = get_realtime_spots(gridsquare)
+        
+        if spots:
+            spot_df = pd.DataFrame(spots)
+            
+            selected_band = st.radio("Select Band for Heatmap", ["All Bands", "10m", "20m", "40m"], horizontal=True)
+            if selected_band != "All Bands":
+                display_df = spot_df[spot_df['band'] == selected_band]
+            else:
+                display_df = spot_df
+
+            # Probability mapping based on SNR
+            # SNR > 0: High (Green), -15 < SNR <= 0: Marginal (Orange), SNR <= -15: Low (Red)
+            def map_prob(snr):
+                if snr > 0: return 1.0 # High
+                if snr > -15: return 0.6 # Marginal
+                return 0.2 # Low
+            
+            display_df['Probability'] = display_df['snr'].apply(map_prob)
+            
+            if not display_df.empty:
+                fig_heat = px.density_mapbox(
+                    display_df, 
+                    lat='lat', 
+                    lon='lon', 
+                    z='Probability', 
+                    radius=15,
+                    center=dict(lat=lat, lon=lon), 
+                    zoom=1,
+                    mapbox_style="carto-positron",
+                    color_continuous_scale=[[0, 'red'], [0.5, 'orange'], [1.0, 'green']],
+                    title=f"WSPR Propagation Heatmap ({selected_band})",
+                )
+                fig_heat.update_layout(height=600, margin=dict(l=0, r=0, t=40, b=0))
+                st.plotly_chart(fig_heat, use_container_width=True)
+            else:
+                st.warning(f"No recent WSPR spots found for the {selected_band} band.")
+        else:
+            st.warning("No recent WSPR spots found near your location. Try a different gridsquare or check back later.")
+
+        st.subheader("🌍 Theoretical World DX Path Map")
         try:
             targets = get_dx_targets()
             fig_map = go.Figure()

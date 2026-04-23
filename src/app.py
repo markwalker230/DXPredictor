@@ -100,6 +100,23 @@ else:
 
         chart_df = df.melt(id_vars=['UTC', 'Local (UTC+2)'], value_vars=['10m', '20m', '40m'], var_name='Band', value_name='Probability')
         fig = px.line(chart_df, x='UTC', y='Probability', color='Band', line_shape='spline', title="Hourly Propagation Probability", template="plotly_white")
+        
+        # Add vertical line for current UTC hour
+        current_utc_hour = datetime.datetime.now(datetime.timezone.utc).hour
+        fig.add_vline(x=current_utc_hour, line_width=3, line_dash="dash", line_color="red", annotation_text="NOW", annotation_position="top left")
+
+        fig.update_xaxes(
+            tickmode='linear',
+            tick0=0,
+            dtick=1,
+            range=[-0.5, 23.5],
+            title="Hour (UTC)"
+        )
+        
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            hovermode="x unified"
+        )
         st.plotly_chart(fig, use_container_width=True)
         
         st.subheader("📋 Optimization Table")

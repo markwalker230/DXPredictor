@@ -23,12 +23,62 @@ if 'default_gs' not in st.session_state:
 # Custom Styling
 st.markdown("""
 <style>
-    .main { background-color: #f5f7f9; }
-    div[data-testid="stMetric"] { background-color: #1e293b !important; padding: 15px !important; border-radius: 10px !important; border: 2px solid #3b82f6 !important; box-shadow: 2px 2px 10px rgba(0,0,0,0.2) !important; margin-bottom: 10px !important; }
-    div[data-testid="stMetricLabel"] { color: #e2e8f0 !important; font-weight: 600 !important; font-size: 1.1rem !important; }
-    div[data-testid="stMetricValue"] { color: #60a5fa !important; font-weight: 800 !important; }
-    div[data-testid="stMetricDelta"] { color: #f87171 !important; font-weight: bold !important; }
-    .activation-card { background-color: #ffffff !important; color: #1e293b !important; padding: 15px; border-radius: 10px; border-left: 5px solid #ef4444; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 10px; }
+    /* Main background - clean white for high contrast */
+    .main { background-color: #ffffff !important; }
+    
+    /* Metrics - Darker background with brighter text for maximum pop */
+    div[data-testid="stMetric"] { 
+        background-color: #0f172a !important; 
+        padding: 20px !important; 
+        border-radius: 12px !important; 
+        border: 2px solid #1e40af !important; 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important; 
+        margin-bottom: 15px !important; 
+    }
+    div[data-testid="stMetricLabel"] { 
+        color: #93c5fd !important; 
+        font-weight: 700 !important; 
+        font-size: 1.0rem !important; 
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+    div[data-testid="stMetricValue"] { 
+        color: #ffffff !important; 
+        font-weight: 800 !important; 
+        font-size: 2.2rem !important;
+    }
+    div[data-testid="stMetricDelta"] { 
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        padding: 2px 8px !important;
+        border-radius: 4px !important;
+        font-weight: bold !important; 
+    }
+
+    /* Activation Cards - High contrast borders and dark text */
+    .activation-card { 
+        background-color: #f8fafc !important; 
+        color: #0f172a !important; 
+        padding: 18px; 
+        border-radius: 10px; 
+        border: 1px solid #e2e8f0 !important;
+        border-left: 6px solid #ef4444 !important; 
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important; 
+        margin-bottom: 12px; 
+    }
+    .activation-card a {
+        color: #0f172a !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Global Text Contrast */
+    h1, h2, h3 { color: #0f172a !important; font-weight: 800 !important; }
+    p, span, label { color: #1e293b !important; }
+    
+    /* Sidebar contrast */
+    section[data-testid="stSidebar"] {
+        background-color: #f1f5f9 !important;
+        border-right: 1px solid #e2e8f0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -177,10 +227,10 @@ else:
             st_tab, po_tab = st.tabs(["SOTA", "POTA"])
             with st_tab:
                 for sota in activations.get("sota", []):
-                    st.markdown(f'<div class="activation-card"><a href="https://sotl.as/summits/{sota.get("summitCode")}" target="_blank" style="text-decoration:none; color:#1e293b;"><strong>{sota.get("summitCode")}</strong>: {sota.get("summitName")}<br><em>Elev: {sota.get("altitude")}m | Pts: {sota.get("points")}</em></a></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="activation-card"><a href="https://sotl.as/summits/{sota.get("summitCode")}" target="_blank" style="text-decoration:none;"><strong>{sota.get("summitCode")}</strong>: {sota.get("summitName")}<br><em>Elev: {sota.get("altitude")}m | Pts: {sota.get("points")}</em></a></div>', unsafe_allow_html=True)
             with po_tab:
                 for pota in activations.get("pota", []):
-                    st.markdown(f'<div class="activation-card" style="border-left-color: #22c55e;"><a href="https://pota.app/#/park/{pota.get("reference")}" target="_blank" style="text-decoration:none; color:#1e293b;"><strong>{pota.get("reference")}</strong>: {pota.get("name")}</a></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="activation-card" style="border-left-color: #22c55e;"><a href="https://pota.app/#/park/{pota.get("reference")}" target="_blank" style="text-decoration:none;"><strong>{pota.get("reference")}</strong>: {pota.get("name")}</a></div>', unsafe_allow_html=True)
 
     with tab_paths:
         st.subheader("🌍 Real-Time Global DX Heatmap (WSPR)")

@@ -38,7 +38,7 @@ In the "Deploy an app" window, fill in the following:
 - **Repository:** Select your `yourusername/DXPredictor` repo.
 - **Branch:** Usually `main` or `master`.
 - **Main file path:** `src/app.py` (This is the entry point of your app).
-- **App URL:** You can customize this (e.g., `dx-predictor.streamlit.app`).
+- **App URL:** [https://dx-predictor.streamlit.app/](https://dx-predictor.streamlit.app/)
 
 Click **"Deploy!"** and wait about 2-3 minutes. Your app will be live on the internet!
 

@@ -63,8 +63,9 @@ with st.sidebar:
         solar = fetch_solar()
         iono = fetch_iono()
     
-    st.metric("Solar Flux Index (SFI)", solar.get('sfi', 100))
+    st.metric("Solar Flux Index (SFI)", solar.get('sfi', 150), help=f"Data from: {solar.get('date', 'N/A')}")
     st.metric("T-Index (ASWFC)", iono.get('t_index', 100), help="Australian Space Weather T-Index.")
+
     st.metric("SANSA State", iono.get('sansa_state', "Quiet"))
     st.metric("Planetary K-index", solar.get('kp', 2), delta=f"Penalty: {int(solar.get('kp', 2)*12)}%", delta_color="inverse")
 

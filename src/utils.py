@@ -36,10 +36,8 @@ def get_solar_indices():
         data = r.json()
         
         # Look for the latest valid (non -1) entry
-        sfi = 150
-        ssn = 100
+        res = {"ssn": 100, "sfi": 150, "kp": 2, "date": "N/A"}
         for entry in reversed(data):
-            # Try smoothed first, fallback to observed
             val_sfi = entry.get('smoothed_f10_7', -1)
             if val_sfi <= 0: val_sfi = entry.get('f10.7', -1)
             
@@ -47,17 +45,18 @@ def get_solar_indices():
             if val_ssn <= 0: val_ssn = entry.get('ssn', -1)
             
             if val_sfi > 0 and val_ssn > 0:
-                sfi = val_sfi
-                ssn = val_ssn
+                res["sfi"] = val_sfi
+                res["ssn"] = val_ssn
+                res["date"] = entry.get("time-tag", "N/A")
                 break
         
         r_kp = requests.get("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json", timeout=10, headers=headers)
         kp_data = r_kp.json()
-        kp = kp_data[-1].get('kp_index', 3)
+        res["kp"] = kp_data[-1].get('kp_index', 3)
         
-        return {"ssn": ssn, "sfi": sfi, "kp": kp}
+        return res
     except Exception as e:
-        return {"ssn": 90, "sfi": 145, "kp": 2, "error": str(e)}
+        return {"ssn": 90, "sfi": 145, "kp": 2, "date": "Error", "error": str(e)}
 
 def get_ionospheric_indices():
     """Fetch T-index from ASWFC and SANSA state."""
@@ -65,15 +64,24 @@ def get_ionospheric_indices():
     headers = {'User-Agent': 'Mozilla/5.0'}
     
     try:
-        # ASWFC - Correct Real-Time URL
-        r = requests.get("https://www.sws.bom.gov.au/HF_Systems/1/6/3", timeout=10, headers=headers)
-        if r.status_code == 200:
-            if "Australian Region T index" in r.text:
-                # Format: "Australian Region T index:   85"
-                import re
-                match = re.search(r'Australian Region T index:\s*(-?\d+)', r.text)
-                if match:
-                    indices["t_index"] = int(match.group(1))
+        # ASWFC - Try multiple possible real-time endpoints
+        urls = [
+            "https://www.sws.bom.gov.au/HF_Systems/1/6/3",
+            "https://www.sws.bom.gov.au/HF_Systems/6/5/1"
+        ]
+        for url in urls:
+            try:
+                r = requests.get(url, timeout=10, headers=headers)
+                if r.status_code == 200:
+                    # Look for "Australian Region T index" with flexible regex
+                    import re
+                    # Handles "Australian Region T index: 85" or "Australian Region T index : 85" etc.
+                    match = re.search(r'Australian Region T index\s*[:\s]\s*(-?\d+)', r.text, re.IGNORECASE)
+                    if match:
+                        indices["t_index"] = int(match.group(1))
+                        break
+            except Exception:
+                continue
     except Exception:
         pass
 

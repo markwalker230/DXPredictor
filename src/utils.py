@@ -34,9 +34,22 @@ def get_solar_indices():
     try:
         r = requests.get("https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json", timeout=10, headers=headers)
         data = r.json()
-        latest = data[-1]
-        ssn = latest.get('smoothed_ssn', 100)
-        sfi = latest.get('smoothed_f10_7', 150)
+        
+        # Look for the latest valid (non -1) entry
+        sfi = 150
+        ssn = 100
+        for entry in reversed(data):
+            # Try smoothed first, fallback to observed
+            val_sfi = entry.get('smoothed_f10_7', -1)
+            if val_sfi <= 0: val_sfi = entry.get('f10.7', -1)
+            
+            val_ssn = entry.get('smoothed_ssn', -1)
+            if val_ssn <= 0: val_ssn = entry.get('ssn', -1)
+            
+            if val_sfi > 0 and val_ssn > 0:
+                sfi = val_sfi
+                ssn = val_ssn
+                break
         
         r_kp = requests.get("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json", timeout=10, headers=headers)
         kp_data = r_kp.json()
@@ -52,15 +65,15 @@ def get_ionospheric_indices():
     headers = {'User-Agent': 'Mozilla/5.0'}
     
     try:
-        # ASWFC (SWS) - T-index data (Text file)
-        # SWS frequently publishes their T-index. We'll use the latest available if reachable.
-        r = requests.get("https://www.sws.bom.gov.au/hf_systems/6/5/1", timeout=10, headers=headers)
+        # ASWFC - Correct Real-Time URL
+        r = requests.get("https://www.sws.bom.gov.au/HF_Systems/1/6/3", timeout=10, headers=headers)
         if r.status_code == 200:
-            # SWS format is often simple text like: "CURRENT T INDEX: 120"
-            for line in r.text.split("\n"):
-                if "CURRENT T INDEX" in line.upper():
-                    indices["t_index"] = int(line.split(":")[-1].strip())
-                    break
+            if "Australian Region T index" in r.text:
+                # Format: "Australian Region T index:   85"
+                import re
+                match = re.search(r'Australian Region T index:\s*(-?\d+)', r.text)
+                if match:
+                    indices["t_index"] = int(match.group(1))
     except Exception:
         pass
 
